@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  cars-nestjs:
+    build: .
+    container_name: "cars-nestjs"
+    ports:
+      - 4000:3000
+    restart: unless-stopped
