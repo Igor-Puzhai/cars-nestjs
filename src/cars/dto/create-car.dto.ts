@@ -2,22 +2,29 @@ import {
     IsNotEmpty,
     IsDateString,
     IsNumber,
-    ValidateNested
+    ValidateNested,
+    IsString
 } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
-import { CreateManufacturerDto } from './create-manufacturer.dto';
 import { CreateOwnerDto } from './create-owner.dto';
 
 export class CreateCarDto {
+    @ApiProperty()
     @IsNotEmpty()
-    @ValidateNested()
-    readonly manufacturer: CreateManufacturerDto;
+    @IsString()
+    manufacturerId: string;
+    @ApiProperty()
     @IsNotEmpty()
     @IsNumber()
     readonly price: number;
+    @ApiProperty()
     @IsNotEmpty()
     @IsDateString()
     readonly firstRegistrationDate: string;
+    @ApiProperty({
+        type: [CreateOwnerDto]
+    })
     @IsNotEmpty()
     @ValidateNested()
     readonly owners: CreateOwnerDto[];

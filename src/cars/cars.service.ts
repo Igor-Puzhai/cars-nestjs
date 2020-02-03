@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 
-import { Car, CarPopulated } from '../interfaces/car.interface';
+import { Car } from '../interfaces/car.interface';
 import { Manufacturer } from "../interfaces/manufacturer.interface";
 import { Owner } from "../interfaces/owner.interface";
 import { CreateCarDto } from './dto/create-car.dto'
 import { UpdateCarDto } from "./dto/update-car.dto";
+import { GetCarDto } from "./dto/get-car.dto";
+import { GetOwnerDto } from "./dto/get-owner.dto";
 
 @Injectable()
 export class CarsService {
@@ -72,20 +74,11 @@ export class CarsService {
 
         this.owners = this.owners.concat(owners);
 
-        const manufacturer: Manufacturer = {
-            id: uuid(),
-            name: carDto.manufacturer.name,
-            phone: carDto.manufacturer.phone,
-            siret: carDto.manufacturer.siret
-        };
-
-        this.manufacturers.push(manufacturer);
-
         const firstRegistrationDate: Date = new Date(carDto.firstRegistrationDate);
 
         const car: Car = {
             id: uuid(),
-            manufacturerId: manufacturer.id,
+            manufacturerId: carDto.manufacturerId,
             price: carDto.price,
             firstRegistrationDate: firstRegistrationDate,
             ownerIds: ownerIds,
@@ -94,38 +87,42 @@ export class CarsService {
         this.cars.push(car);
     }
 
-    findAll(): CarPopulated[] {
+    findAll(): GetCarDto[] {
         return this.cars.map((car: Car) => {
             return this.populateCar(car);
         });
     }
 
-    findById(id): CarPopulated {
+    findById(id): GetCarDto {
         return this.populateCar(this.cars.find((car: Car) => car.id === id));
     }
 
-    findManufacturerById(id): Manufacturer {
-        const car = this.cars.find((car: Car) => car.id === id);
+    findManufacturerByCarId(car_id): Manufacturer {
+        const car = this.cars.find((car: Car) => car.id === car_id);
         const manufacturerId: string = car.manufacturerId;
 
         return this.manufacturers.find((manufacturer: Manufacturer) => manufacturer.id === manufacturerId);
+    }
+
+    findManufacturerById(id): Manufacturer {
+        return this.manufacturers.find((manufacturer: Manufacturer) => manufacturer.id === id);
     }
 
     update(id: string, updateCarDto: UpdateCarDto) {
         let car: Car = this.cars.find((car: Car) => car.id === id);
 
         if (!car) {
-            return;
+            return 'car not found';
         }
 
-        const carPopulated = this.populateCar(car);
+        if (!!updateCarDto.manufacturerId) {
+            const manufacturer: Manufacturer = this.findManufacturerById(updateCarDto.manufacturerId);
 
-        if (!!updateCarDto.manufacturer) {
-            let manufacturer: Manufacturer = carPopulated.manufacturer;
+            if (!manufacturer) {
+                return 'unknown manufacturer';
+            }
 
-            manufacturer.name = updateCarDto.manufacturer.name;
-            manufacturer.phone = updateCarDto.manufacturer.phone;
-            manufacturer.siret = updateCarDto.manufacturer.siret;
+            car.manufacturerId = updateCarDto.manufacturerId;
         }
 
         if (!!updateCarDto.price) {
@@ -137,6 +134,7 @@ export class CarsService {
         }
 
         if (updateCarDto.owners) {
+            // remove old owners
             for (let owner_id of car.ownerIds) {
                 const index = this.owners.findIndex((owner: Owner) => owner.id === owner_id);
 
@@ -159,6 +157,8 @@ export class CarsService {
 
             car.ownerIds = newOwnerIds;
         }
+
+        return 'car updated';
     }
 
     deleteById(id: string) {
@@ -170,7 +170,7 @@ export class CarsService {
     }
 
     populateCar(car) {
-        const manufacturer: Manufacturer = this.findManufacturerById(car.id);
+        const manufacturer: Manufacturer = this.findManufacturerByCarId(car.id);
 
         let ownerIdsDict = {};
 
@@ -178,7 +178,16 @@ export class CarsService {
             ownerIdsDict[owner_id] = true;
         }
 
-        const owners: Owner[] = this.owners.filter((owner: Owner) => ownerIdsDict[owner.id]);
+        // const owners: Owner[] = this.owners.filter((owner: Owner) => ownerIdsDict[owner.id]);
+        const owners: GetOwnerDto[] = this.owners
+            .filter((owner: Owner) => ownerIdsDict[owner.id])
+            .map((owner: Owner) => {
+                return {
+                    id: owner.id,
+                    name: owner.name,
+                    purchaseDate: owner.purchaseDate.toISOString()
+                };
+            });
 
         return  {
             id: car.id,
@@ -215,11 +224,11 @@ export class CarsService {
     }
 
     applyDiscount() {
-        let d = new Date();
-        const minDate = new Date(d.setUTCMonth(d.getUTCMonth() - 18));
+        let minDate = new Date();
+        minDate.setUTCMonth(minDate.getUTCMonth() - 18);
 
-        d = new Date();
-        const maxDate = new Date(d.setUTCMonth(d.getUTCMonth() - 12));
+        let maxDate = new Date();
+        maxDate.setUTCMonth(maxDate.getUTCMonth() - 12);
 
         for (let car of this.cars) {
             if (car.firstRegistrationDate > minDate && car.firstRegistrationDate < maxDate) {
