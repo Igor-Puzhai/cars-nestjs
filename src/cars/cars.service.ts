@@ -178,7 +178,6 @@ export class CarsService {
             ownerIdsDict[owner_id] = true;
         }
 
-        // const owners: Owner[] = this.owners.filter((owner: Owner) => ownerIdsDict[owner.id]);
         const owners: GetOwnerDto[] = this.owners
             .filter((owner: Owner) => ownerIdsDict[owner.id])
             .map((owner: Owner) => {
