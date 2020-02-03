@@ -13,17 +13,17 @@ export class UpdateCarDto {
     @ApiProperty()
     @IsOptional()
     @IsString()
-    readonly manufacturerId: string;
+    readonly manufacturerId?: string;
     @ApiProperty()
     @IsOptional()
     @IsNumber()
-    readonly price: number;
+    readonly price?: number;
     @ApiProperty()
     @IsOptional()
     @IsDateString()
-    readonly firstRegistrationDate: string;
+    readonly firstRegistrationDate?: string;
     @ApiProperty()
     @IsOptional()
     @ValidateNested()
-    readonly owners: CreateOwnerDto[];
+    readonly owners?: CreateOwnerDto[];
 }

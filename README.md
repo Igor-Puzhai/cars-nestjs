@@ -30,10 +30,14 @@ DELETE /cars/:id
 delete car by id
 
 POST /cars/remove-old-owners-apply-discount
-trigger to apply discounts and remove owners 
+trigger to apply discount and remove owners 
 
 ## Concerns
-there is no manufacturers API, to add a car you need to use an existing manufacturerId 
+- there is no manufacturers API, to add a car you need to use an existing manufacturerId
+- trigger for applying discount and removing old owners - should this be split into separate triggers/routes? if it's a single trigger, naming it clearly is a challenge.
 
 ## Questions
-spec says siret is a number, but internet says it may contain letters
+spec says siret is a number, but wikpedia says it may contain letters https://en.wikipedia.org/wiki/SIRET_code
+
+## Tests
+added basic tests coverage of cars service
